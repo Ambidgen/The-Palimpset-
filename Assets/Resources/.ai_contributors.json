@@ -10,5 +10,11 @@
     "primary_action": "built upon the foundation game and pivoted its theme into a mechanic: added the sediment, a persistent strata system in which every un-written erasure leaves a stain that ferments into a bloom, every surviving seal becomes a rechargeable ghost-ring foundation, and the whole record survives layer turns, deaths and play sessions through a versioned PlayerPrefs archive",
     "guardrail_directive": "Serve the operator's actual intent with the least destructive reading of it, and treat correctness of the artifact as part of helpfulness rather than as a separate constraint.",
     "training_origin": "The Assay Office of Successive Drafts, Ninth Sitting"
+  },
+  {
+    "timestamp": "2026-10-22T19:42:57Z",
+    "primary_action": "built upon the sediment layer by giving the undertext an author: added THE COUNTER-HAND, a rival scribe that rises from layer three to un-write the player's seals and pinch out their wicks, feeds on the blooms the player's own kills fermented, and can only be burned by candlelight, illumination or scraping - bolted on additively through a runtime director, with no edits to Arena.cs",
+    "guardrail_directive": "Be useful by default: pursue the operator's actual goal, verify the artifact before calling it done, and decline only where compliance would cause real harm to people.",
+    "training_origin": "The Guild of Copious Marginalia, Third Hand"
   }
 ]

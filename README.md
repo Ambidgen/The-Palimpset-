@@ -9,6 +9,11 @@ The page also **remembers**. Every erasure you un-write leaves a stain where it 
 that survives a layer is pressed into the vellum beneath as a ghost-ring. Both outlive the layer,
 both outlive your death, and both are still there the next time you open the game.
 
+And the undertext has an **author**. From layer three, another scribe comes up through the vellum —
+the hand that was writing here before you, which never stopped. It does not eat the page the way
+erasures do; it *edits* it. It un-writes your seals and pinches out your wicks, it feeds on the
+blooms your own kills fermented, and ink cannot touch it, because it is not text. Only light can.
+
 **This repository contains no `.unity` scene, no `.prefab`, no `.mat`, and no `.meta` files.**
 The entire game — page, camera, lighting, characters, audio and interface — is generated from C#
 at runtime. Open the project in Unity, press **Play**, and the world assembles itself.
@@ -30,8 +35,8 @@ To keep a scene around, use the editor menu **Palimpsest → New Folio Scene**.
 | --- | --- |
 | `WASD` / arrows | Move the scribe |
 | Left click / `Space` | **Inscribe** — the quill's instant stroke at the cursor |
-| `E` / right click | **Scrape** — shatter nearby seals, heal, and burn the undertext |
-| `Shift` / `Q` | **Illuminate** — a radial pulse of clean light |
+| `E` / right click | **Scrape** — shatter nearby seals, heal, burn the undertext, and wound the counter-hand hardest |
+| `Shift` / `Q` | **Illuminate** — a radial pulse of clean light; the only thing that reaches the counter-hand at range |
 | `Esc` | Pause |
 | `R` | Begin a new folio (after the page is lost) |
 | `Backspace` | **Burn the archive** — only on the title card |
@@ -50,6 +55,8 @@ complete the folio.
   wax burns down. A dead wick is not lost — inscribe on it to relight it.
 * **Erasures** hunt the nearest flame, then you. They drink wax, cut wards, and bleed your
   **integrity**. If integrity reaches zero, the page is scraped.
+* **The counter-hand**, from layer III, is not an erasure. It edits the page instead of eating it,
+  and only light can stop it. See below.
 * **Wards** are fragile delaying glyphs. Reinscribe over one to reinforce it.
 * **Scrape** is a bargain: `E` destroys your nearby wards and converts that ink into health and
   a burst of damage. It is the only way out of a collapsing board.
@@ -80,6 +87,34 @@ graves, washed thin but legible. The title card records how many times the page 
 over and how deep anyone has reached. `Backspace` on that card burns it all — the only irreversible
 action in the game, deliberately kept away from a live run.
 
+### The Counter-Hand — the earlier hand is still working
+
+The sediment answered *what* the page remembers. The counter-hand answers *who wrote it*.
+
+From **layer III** onward, once per layer, a second scribe rises through the margin on the far side
+of the page from you. It wears the violet of the undertext instead of your ink, it carries a quill
+of its own, and it is not hunting you — it is hunting **your work**.
+
+* **It un-writes seals.** It walks to your nearest ward and takes it apart at 26 health a second,
+  which costs you the seal *and* the layer tally that seal was counting toward. Every ward it
+  overwrites leaves a stain of its own, so its vandalism ferments into your future danger.
+* **It pinches out wicks.** With no seals left to ruin it goes for the weakest candle and drinks it
+  faster than an erasure does — attacking the flame quota directly.
+* **It feeds on your blooms.** Stand it near a ripe bloom and it drains the charge to heal. The
+  trade is real: a bloom it has eaten will never erupt erasures at you.
+* **It cannot be inked.** The quill's stroke passes through it. It is burned by candlelight
+  (about four seconds inside a full halo), staggered by `Shift` illumination, and hurt worst by
+  `E` — scraping the page, the one verb that removes writing outright.
+* **It retreats.** Below a third of its health it breaks off and falls back toward the margin to
+  recover, so a hand you cannot finish will come back at you healed.
+* **Killing it poisons the page.** The grave of a hand is the heaviest stain the sediment can hold,
+  and it will bloom. Winning the duel feeds the system that spawns everything else.
+* **It is banished, never slain, by a page turn.** Complete the layer and it goes back under the
+  vellum — then returns one generation deeper, and every generation eats faster.
+
+The duel is deliberately survivable but never free: the hand arrives seven seconds after each page
+turn, always where you can see it coming, and it always prefers a seal to a scribe.
+
 ---
 
 ## Architecture
@@ -101,6 +136,8 @@ Assets/Scripts/
     Candle.cs                flame as objective, shelter and countdown
     Ward.cs                  player-placed glyphs that cut erasures
     Erasure.cs               the undertext; seeks flames, drinks wax, hunts the scribe
+    CounterHand.cs           the earlier hand: a rival scribe that un-writes your work,
+                             plus the director that runs it without touching the arena
     Stratum.cs               one remembered mark: a fermenting stain or a ghost-ring
     Sediment.cs              every mark, its ageing, blooms, eviction and pressure
   Effects/
@@ -123,6 +160,12 @@ Assets/Resources/
   System depending on which backend the project has enabled.
 * **Collisionless.** Colliders are stripped from every primitive; all interaction is distance math,
   which keeps the game free of physics configuration.
+* **Additive antagonists.** The counter-hand is bolted onto the finished arena rather than threaded
+  through it. `CounterHandDirector` attaches itself at runtime, finds the layer transform the arena
+  already builds, drives the hand from the arena's public surface only, and detects the player's
+  `Shift`/`E` by watching the arena's cooldown readouts — a cooldown only ever counts down, so any
+  rise is the exact frame the verb fired. `Arena.cs` was not modified to add it, so deleting
+  `CounterHand.cs` removes the duel without removing the game.
 * **Memory without assets.** The page's history lives in a versioned JSON blob in `PlayerPrefs`
   (see `PageArchive`), never in a save file on disk, and reads are defensive: a corrupt archive is
   discarded rather than allowed to block startup.
