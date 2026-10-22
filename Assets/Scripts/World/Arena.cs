@@ -81,6 +81,21 @@ namespace Palimpsest
         public bool IsVictory { get; private set; }
         public InputFrame PointerState { get; private set; }
 
+        // ------------------------------------------------------------------
+        // Sediment: what the page remembers
+        // ------------------------------------------------------------------
+
+        /// <summary>The page's accumulated load, 0 (clean) to 1 (all silt).</summary>
+        public float SiltPressure { get { return _sediment != null ? _sediment.Pressure : 0f; } }
+        public int StratumCount { get { return _sediment != null ? _sediment.Count : 0; } }
+        public int StainCount { get { return _sediment != null ? _sediment.StainCount : 0; } }
+        public int BloomCount { get { return _sediment != null ? _sediment.BloomCount : 0; } }
+        public int GhostCount { get { return _sediment != null ? _sediment.GhostCount : 0; } }
+
+        public int ArchiveRuns { get; private set; }
+        public int ArchiveBest { get; private set; }
+        public int ArchiveBestScore { get; private set; }
+
         public string FolioTitle
         {
             get { return FolioNames[Mathf.Clamp(Layer - 1, 0, FolioNames.Length - 1)]; }
@@ -129,11 +144,14 @@ namespace Palimpsest
         {
             get
             {
+                string marks = "\nMarks left on the page: " + StratumCount +
+                    "     Blooms: " + BloomCount;
+
                 if (IsVictory) return "Eight hands deep, the text holds." +
-                    "\nSeals: " + _totalWards + "     Score: " + Score;
+                    "\nSeals: " + _totalWards + "     Score: " + Score + marks;
 
                 return "The undertext rose through layer " + Hud.Roman(Layer) + "." +
-                    "\nSeals: " + _totalWards + "     Score: " + Score;
+                    "\nSeals: " + _totalWards + "     Score: " + Score + marks;
             }
         }
 
@@ -153,6 +171,8 @@ namespace Palimpsest
         CameraRig _rig;
         SfxBank _sfx;
         Hud _hud;
+        Sediment _sediment;
+        ArchiveData _archive;
 
         Mesh _scrawl;
         Material _underglow;
@@ -304,6 +324,23 @@ namespace Palimpsest
             GameObject layerGo = new GameObject("Layer");
             layerGo.transform.SetParent(_pageRoot, false);
             _layerRoot = layerGo.transform;
+
+            // The sediment hangs off the page, not off the layer: marks of earlier hands
+            // must survive the page being turned, which is the entire point of a
+            // palimpsest. ClearLayer() only ever destroys children of _layerRoot.
+            _sediment = Sediment.Build(_pageRoot);
+
+            _archive = PageArchive.Load();
+            ArchiveRuns = _archive.runs;
+            ArchiveBest = _archive.bestLayer;
+            ArchiveBestScore = _archive.bestScore;
+
+            if (_archive.strata != null && _archive.strata.Count > 0)
+            {
+                _sediment.Restore(_archive);
+                Debug.Log("[Palimpsest] " + _archive.strata.Count +
+                    " older marks were found beneath this page. Best layer: " + ArchiveBest + ".");
+            }
         }
 
         void BuildActors()
@@ -353,6 +390,7 @@ namespace Palimpsest
             TickCandles(dt);
             TickErasures(dt);
             PruneLists();
+            if (_sediment != null) _sediment.Tick(dt, Layer);
             UpdateSpawner(dt);
             UpdateAdvance(dt);
             UpdateAtmosphere(dt);
@@ -366,6 +404,23 @@ namespace Palimpsest
         {
             if (IsTitle)
             {
+                // The only irreversible verb in the game, and it is deliberately kept
+                // behind the title card so a stray key can never cost a live run.
+                if (InputRouter.PurgePressed && _sediment != null)
+                {
+                    _sediment.Reset();
+                    PageArchive.Burn();
+
+                    _archive = new ArchiveData();
+                    ArchiveRuns = 0;
+                    ArchiveBest = 0;
+                    ArchiveBestScore = 0;
+
+                    if (_hud != null) _hud.Toast("THE WHOLE PAGE IS SCRAPED CLEAN");
+                    if (_sfx != null) _sfx.Play(Sfx.Scrape, 1f, 0.8f);
+                    if (_rig != null) _rig.Shake(0.18f);
+                }
+
                 if (InputRouter.ConfirmPressed)
                 {
                     IsTitle = false;
@@ -494,18 +549,47 @@ namespace Palimpsest
                 return;
             }
 
-            // 5. Nothing there: a new seal is set.
+            // 5. Nothing living there. Before a blank seal is set, the quill reads the
+            //    sediment: writing on top of an older mark is how the page remembers.
+            Stratum memory = _sediment != null ? _sediment.Nearest(AimPoint, 1.30f) : null;
+            float inherited = 0f;
+            bool cauterised = false;
+
+            if (memory != null)
+            {
+                cauterised = memory.Kind == StratumKind.Stain;
+                inherited = _sediment.Settle(memory);
+            }
+
             Ward placed = Ward.Create(_layerRoot, AimPoint);
+            if (inherited > 0f) placed.Embed(inherited);
+
             _wards.Add(placed);
             WardsThisLayer++;
             _totalWards++;
-            Score += 12;
+
+            // A seal written over the page's own residue is worth more than a fresh one.
+            Score += 12 + Mathf.RoundToInt(inherited * 0.5f);
 
             _scribe.SpendInk();
             _scribe.Lash();
 
-            if (_sfx != null) _sfx.Play(Sfx.Ward, 0.9f, Random.Range(0.94f, 1.12f));
-            if (_rig != null) _rig.Shake(0.035f);
+            if (_sfx != null)
+            {
+                if (cauterised) _sfx.Play(Sfx.Scour, 0.55f, 1.1f);
+                _sfx.Play(Sfx.Ward, 0.9f, Random.Range(0.94f, 1.12f));
+            }
+            if (_rig != null) _rig.Shake(cauterised ? 0.06f : 0.035f);
+
+            if (cauterised)
+            {
+                TransientRing.Spawn(_layerRoot, AimPoint, 0.25f, 1.9f, Palette.InkGlow, 0.55f, 3.0f);
+                if (_hud != null) _hud.Toast("THE STAIN IS CAUTERISED");
+            }
+            else if (inherited > 0f)
+            {
+                if (_hud != null) _hud.Toast("THE SEAL INHERITS ITS PREDECESSOR");
+            }
 
             if (WardsThisLayer == WardsRequired && _hud != null)
             {
@@ -546,7 +630,22 @@ namespace Palimpsest
                 if (Vector3.Distance(candle.transform.position, center) < 7.5f) candle.Kindle(0.12f);
             }
 
-            if (_hud != null) _hud.Toast("ILLUMINATION");
+            // Light is the second answer to silt: it does not destroy the page's memory,
+            // it settles what is still fermenting into clean, inert rings.
+            int calmed = _sediment != null ? _sediment.Scour(center, 7.5f, 0.62f) : 0;
+
+            if (_hud != null)
+            {
+                if (calmed > 0)
+                {
+                    _hud.Toast("ILLUMINATION - " + calmed + " STAIN" + (calmed == 1 ? "" : "S") + " SETTLED");
+                    if (_sfx != null) _sfx.Play(Sfx.Scour, 0.7f, 1.05f);
+                }
+                else
+                {
+                    _hud.Toast("ILLUMINATION");
+                }
+            }
         }
 
         void TryScrape()
@@ -578,10 +677,17 @@ namespace Palimpsest
             WardsThisLayer = Mathf.Max(0, WardsThisLayer - broken);
             HealIntegrity(7f + broken * 1.5f);
 
+            int scrubbed = _sediment != null ? _sediment.Scrub(center, 4.4f) : 0;
+
             TransientRing.Spawn(_layerRoot, center, 0.3f, 4.4f, Palette.ErasureGlow, 0.55f, 3.2f);
             if (_rig != null) _rig.Shake(0.16f);
             if (_sfx != null) _sfx.Play(Sfx.Scrape, 1.0f, 0.9f);
-            if (_hud != null) _hud.Toast("THE PAGE IS SCRAPED - " + broken + " SEALS LOST");
+
+            if (_hud != null)
+            {
+                string residue = scrubbed > 0 ? " - " + scrubbed + " MARKS ERASED" : "";
+                _hud.Toast("THE PAGE IS SCRAPED - " + broken + " SEALS LOST" + residue);
+            }
 
             for (int i = _erasures.Count - 1; i >= 0; i--)
             {
@@ -652,12 +758,32 @@ namespace Palimpsest
                 if (_erasures[i] != null) alive++;
             }
 
-            if (alive >= _erasureTarget) return;
+            // Silt makes the page crowded: every two blooms supports one more body.
+            int capacity = _erasureTarget + (_sediment != null ? _sediment.BloomCount / 2 : 0);
+            if (alive >= capacity)
+            {
+                _spawnTimer = 0.35f;
+                return;
+            }
+
+            // An eruption outranks the ordinary rim trickle, and it comes from a place
+            // the player can see, prepare for, or cauterise in advance.
+            Vector3 vent;
+            if (_sediment != null && _sediment.TryConsumeEruption(out vent))
+            {
+                SpawnErasureAt(vent, false, 0.92f);
+                TransientRing.Spawn(_layerRoot, vent, 0.3f, 2.2f, Palette.ErasureGlow, 0.6f, 2.2f);
+                if (_sfx != null) _sfx.Play(Sfx.Silt, 0.7f, Random.Range(0.90f, 1.10f));
+                if (_hud != null && Random.value > 0.55f) _hud.Toast("THE SILT ERUPTS");
+                return;
+            }
 
             _spawnTimer -= dt;
             if (_spawnTimer > 0f) return;
 
-            _spawnTimer = _erasureSpawnInterval;
+            // A heavily overwritten page also spawns sooner from its rim.
+            float pressure = _sediment != null ? _sediment.Pressure : 0f;
+            _spawnTimer = _erasureSpawnInterval * (1f - 0.28f * pressure);
             SpawnErasure();
         }
 
@@ -701,7 +827,9 @@ namespace Palimpsest
             {
                 float t = Mathf.Clamp01((Layer - 1) / (float)FinalLayer);
                 float breathe = 0.55f + Mathf.Sin(_runTime * 0.7f) * 0.18f;
-                MaterialFactory.ApplyEmission(_underglow, Palette.ErasureGlow, (0.35f + t * 1.5f) * breathe);
+                float silt = _sediment != null ? _sediment.Pressure : 0f;
+                MaterialFactory.ApplyEmission(_underglow, Palette.ErasureGlow,
+                    (0.35f + t * 1.5f + silt * 0.90f) * breathe);
             }
 
             if (_heartMaterial != null)
@@ -762,8 +890,17 @@ namespace Palimpsest
             float angle = Random.Range(0f, Mathf.PI * 2f);
             float radius = PageRadius + Random.Range(1.5f, 4.0f);
             Vector3 position = new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius);
+            SpawnErasureAt(position, provoked, 1f);
+        }
 
-            float size = Random.Range(0.46f, 0.66f) + Mathf.Min(0.18f, Layer * 0.02f);
+        /// <summary>
+        /// Spawns an erasure at an explicit point. Silt eruptions use this: the creature
+        /// is the ordinary kind, but because the page announces where it will come from,
+        /// the player's own kill history becomes readable and avoidable terrain.
+        /// </summary>
+        void SpawnErasureAt(Vector3 position, bool provoked, float sizeScale)
+        {
+            float size = (Random.Range(0.46f, 0.66f) + Mathf.Min(0.18f, Layer * 0.02f)) * sizeScale;
             float health = _erasureHealthBase + Random.Range(-4f, 8f);
             float damage = 12f + Layer * 1.4f;
 
@@ -780,6 +917,16 @@ namespace Palimpsest
 
             _erasures.Remove(erasure);
             Score += 25;
+
+            // Every un-written erasure leaves residue. Stronger bodies leave a stronger
+            // blot, and only strong blots ever ferment into blooms, so the page's future
+            // danger is a readable consequence of what the player has already done.
+            if (_sediment != null)
+            {
+                float strength = Mathf.Clamp01(0.30f + erasure.MaxHealth / 240f
+                    + (erasure.Provoked ? 0.10f : 0f));
+                _sediment.Stain(erasure.transform.position, strength);
+            }
 
             TransientRing.Spawn(_layerRoot, erasure.transform.position, 0.25f, 1.8f, Palette.InkGlow, 0.45f, 3.0f);
             TransientRing.Spawn(_layerRoot, erasure.transform.position, 0.15f, 1.0f, Palette.ErasureGlow, 0.6f, 2.0f);
@@ -956,17 +1103,29 @@ namespace Palimpsest
 
         void CompleteLayer()
         {
+            // Anything still standing when the page turns is pressed into the sediment
+            // as a ghost-ring. This is why rebuilding on old seals is cheaper than
+            // starting from blank vellum: those rings were placed by the player.
+            List<Vector3> foundations = new List<Vector3>();
+            for (int i = 0; i < _wards.Count; i++)
+            {
+                Ward ward = _wards[i];
+                if (ward != null && !ward.IsBroken) foundations.Add(ward.transform.position);
+            }
+
             Score += 120 * Layer;
             HealIntegrity(16f);
 
             if (Layer >= FinalLayer)
             {
+                CommitArchive();
                 EndRun(true);
                 return;
             }
 
             Layer++;
-            BeginLayer();
+            BeginLayer(foundations);
+            CommitArchive();
         }
 
         void EndRun(bool victory)
@@ -983,6 +1142,21 @@ namespace Palimpsest
                 _sfx.Silence();
             }
             if (_rig != null) _rig.Shake(victory ? 0.2f : 0.45f);
+
+            CommitArchive();
+        }
+
+        /// <summary>Writes the current page, and its best-ever marks, to durable storage.</summary>
+        void CommitArchive()
+        {
+            if (_sediment == null) return;
+
+            _archive = PageArchive.Capture(_sediment, Layer, Score, _archive);
+            _archive.runs = ArchiveRuns;
+            PageArchive.Save(_archive);
+
+            ArchiveBest = _archive.bestLayer;
+            ArchiveBestScore = _archive.bestScore;
         }
 
         // ------------------------------------------------------------------
@@ -1001,6 +1175,12 @@ namespace Palimpsest
             _illuminateCooldown = 0f;
             _scrapeCooldown = 0f;
 
+            // A new run is a new folio laid over the old one, not a blank page. The
+            // scrape takes the faintest marks and leaves the heaviest, so a death never
+            // fully erases a player's own history.
+            if (_sediment != null) _sediment.Wash(0.16f);
+            ArchiveRuns++;
+
             if (_scribe != null) _scribe.transform.position = Vector3.zero;
 
             BeginLayer();
@@ -1010,6 +1190,10 @@ namespace Palimpsest
                 _sfx.Play(Sfx.Start, 0.9f, 1.0f);
             }
             if (_hud != null) _hud.Toast("LAYER I - " + FolioTitle);
+
+            // Persist immediately: a player who closes the game mid-run should still
+            // find the marks they have made when they come back.
+            CommitArchive();
         }
 
         void RestartRun()
@@ -1018,9 +1202,15 @@ namespace Palimpsest
             BeginRun();
         }
 
-        void BeginLayer()
+        void BeginLayer(List<Vector3> foundations = null)
         {
             ClearLayer();
+
+            // Age everything and bury the previous layer's surviving seals. This happens
+            // after ClearLayer so no ward GameObject is read once it has been destroyed.
+            // Only a completed layer passes foundations; a fresh run has already been
+            // aged once by Sediment.Wash and must not be aged twice for one death.
+            if (_sediment != null && foundations != null) _sediment.OnLayerTurned(foundations);
 
             Folio = Layer;
             WardsThisLayer = 0;

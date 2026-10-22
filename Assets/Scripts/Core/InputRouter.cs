@@ -145,6 +145,23 @@ namespace Palimpsest
             }
         }
 
+        /// <summary>
+        /// Backspace. Only read on the title card, where it burns the persisted archive
+        /// and returns the page to blank vellum. Deliberately a separate binding from
+        /// restart so that a run in progress can never be lost to it.
+        /// </summary>
+        public static bool PurgePressed
+        {
+            get
+            {
+#if !ENABLE_LEGACY_INPUT_MANAGER && ENABLE_INPUT_SYSTEM
+                return Keyboard.current != null && Keyboard.current.backspaceKey.wasPressedThisFrame;
+#else
+                return Input.GetKeyDown(KeyCode.Backspace);
+#endif
+            }
+        }
+
         /// <summary>The cursor in screen pixels (falls back to the screen centre).</summary>
         public static Vector2 PointerScreen
         {

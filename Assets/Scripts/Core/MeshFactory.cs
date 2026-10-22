@@ -15,6 +15,7 @@ namespace Palimpsest
     {
         static Mesh _unitRing;
         static Mesh _unitDisc;
+        static Mesh _unitBlot;
         static Mesh _floorDisc;
 
         // ------------------------------------------------------------------
@@ -60,6 +61,21 @@ namespace Palimpsest
         public static Mesh HeartBand(float inner, float outer)
         {
             return BuildRing(inner, outer, 64);
+        }
+
+        /// <summary>
+        /// A cached, irregular disc used for the silt blots left by un-written
+        /// erasures. The wobble is baked once and every instance is then rotated by
+        /// its own seed, so a page carrying a hundred stains never reads as a field
+        /// of identical circles.
+        /// </summary>
+        public static Mesh UnitBlot
+        {
+            get
+            {
+                if (_unitBlot == null) _unitBlot = BuildBlot(1f, 48, 0x5EED);
+                return _unitBlot;
+            }
         }
 
         // ------------------------------------------------------------------
@@ -135,6 +151,72 @@ namespace Palimpsest
                 triangles[i * 6 + 5] = c;
             }
 
+            mesh.vertices = vertices;
+            mesh.triangles = triangles;
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            return mesh;
+        }
+
+        /// <summary>
+        /// A flat disc with a wobbling, double-rimmed silhouette. Used for silt
+        /// stains: the shape must read as a spill rather than a plate.
+        /// </summary>
+        public static Mesh BuildBlot(float radius, int segments, int seed)
+        {
+            if (segments < 3) segments = 3;
+
+            System.Random rng = new System.Random(seed);
+
+            float[] innerJitter = new float[segments];
+            float[] outerJitter = new float[segments];
+            for (int i = 0; i < segments; i++)
+            {
+                innerJitter[i] = 0.44f + (float)rng.NextDouble() * 0.16f;
+                outerJitter[i] = 0.76f + (float)rng.NextDouble() * 0.32f;
+            }
+
+            Vector3[] vertices = new Vector3[1 + segments * 2];
+            vertices[0] = Vector3.zero;
+
+            for (int i = 0; i < segments; i++)
+            {
+                float angle = (i / (float)segments) * Mathf.PI * 2f;
+                float cos = Mathf.Cos(angle);
+                float sin = Mathf.Sin(angle);
+                vertices[1 + i] = new Vector3(cos * radius * innerJitter[i], 0f, sin * radius * innerJitter[i]);
+                vertices[1 + segments + i] = new Vector3(cos * radius * outerJitter[i], 0f, sin * radius * outerJitter[i]);
+            }
+
+            int[] triangles = new int[segments * 9];
+            int innerStart = 1;
+            int outerStart = 1 + segments;
+
+            for (int i = 0; i < segments; i++)
+            {
+                int next = (i + 1) % segments;
+                int a = innerStart + i;
+                int b = outerStart + i;
+                int c = outerStart + next;
+                int d = innerStart + next;
+
+                // Centre fan meeting the inner rim, wound like BuildDisc.
+                triangles[i * 9 + 0] = 0;
+                triangles[i * 9 + 1] = d;
+                triangles[i * 9 + 2] = a;
+
+                // The band between the two wobbling rims, wound like BuildRing.
+                triangles[i * 9 + 3] = a;
+                triangles[i * 9 + 4] = c;
+                triangles[i * 9 + 5] = b;
+
+                triangles[i * 9 + 6] = a;
+                triangles[i * 9 + 7] = d;
+                triangles[i * 9 + 8] = c;
+            }
+
+            Mesh mesh = new Mesh();
+            mesh.name = "PalimpsestBlot";
             mesh.vertices = vertices;
             mesh.triangles = triangles;
             mesh.RecalculateNormals();

@@ -19,6 +19,7 @@ namespace Palimpsest
         Text _folioLabel;
         Text _flameLabel;
         Text _wardLabel;
+        Text _siltLabel;
         Text _scoreLabel;
         Text _toastLabel;
         Text _hintLabel;
@@ -27,6 +28,7 @@ namespace Palimpsest
         Text _integrityLabel;
 
         CanvasGroup _titleGroup;
+        Text _titleArchive;
         Text _titleHeadline;
         Text _titleSub;
         Text _titlePrompt;
@@ -89,6 +91,10 @@ namespace Palimpsest
                 TextAnchor.UpperLeft, Palette.InkGlow, new Vector2(0f, 1f), new Vector2(0f, 1f),
                 new Vector2(38f, -162f), new Vector2(500f, 32f), serif);
 
+            _siltLabel = Label(root, "Silt", "SILT  0", 21, FontStyle.Normal,
+                TextAnchor.UpperLeft, Palette.Muted, new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(38f, -198f), new Vector2(620f, 32f), serif);
+
             _scoreLabel = Label(root, "Score", "SCORE 0", 22, FontStyle.Normal,
                 TextAnchor.UpperRight, Palette.Muted, new Vector2(1f, 1f), new Vector2(1f, 1f),
                 new Vector2(-38f, -68f), new Vector2(420f, 32f), serif);
@@ -125,9 +131,15 @@ namespace Palimpsest
                 new Vector2(0f, 76f), new Vector2(1600f, 150f), serif);
 
             _titleSub = Label(titleRoot.transform, "Title Sub",
-                "you are the last scribe of a page that has been written over\nlay the seals, keep the flames, and do not let the undertext rise",
-                26, FontStyle.Normal, TextAnchor.MiddleCenter, Palette.Muted,
-                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -26f), new Vector2(1300f, 90f), serif);
+                "you are the last scribe of a page that has been written over\n" +
+                "lay the seals, keep the flames, and do not let the undertext rise\n" +
+                "every erasure you un-write leaves a stain, and stains remember how to return",
+                24, FontStyle.Normal, TextAnchor.MiddleCenter, Palette.Muted,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, -24f), new Vector2(1300f, 120f), serif);
+
+            _titleArchive = Label(titleRoot.transform, "Title Archive", "", 20, FontStyle.Normal,
+                TextAnchor.MiddleCenter, Palette.Muted, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(0f, -112f), new Vector2(1400f, 56f), serif);
 
             _titlePrompt = Label(titleRoot.transform, "Title Prompt", "PRESS SPACE TO BEGIN", 34, FontStyle.Normal,
                 TextAnchor.MiddleCenter, Palette.InkGlow, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
@@ -300,6 +312,24 @@ namespace Palimpsest
                 _titlePrompt.color = Palette.Alpha(Palette.InkGlow, 0.35f + pulse * 0.65f);
             }
 
+            if (_titleArchive != null && showTitle)
+            {
+                // The title card is the one place that admits the page has a past.
+                if (_arena.ArchiveRuns > 0)
+                {
+                    _titleArchive.text = "this page has been written over "
+                        + _arena.ArchiveRuns + (_arena.ArchiveRuns == 1 ? " time" : " times")
+                        + "      deepest layer " + Roman(_arena.ArchiveBest)
+                        + "      best score " + _arena.ArchiveBestScore
+                        + "\nBACKSPACE BURNS THE ARCHIVE";
+                }
+                else
+                {
+                    _titleArchive.text = "the page beneath this one is still blank"
+                        + "\nBACKSPACE BURNS THE ARCHIVE";
+                }
+            }
+
             bool showPause = _arena.IsPaused;
             _pauseGroup.alpha = Mathf.MoveTowards(_pauseGroup.alpha, showPause ? 1f : 0f, dt * 8f);
             _pauseGroup.blocksRaycasts = showPause;
@@ -331,6 +361,24 @@ namespace Palimpsest
             {
                 _wardLabel.text += "      HOLD " + Mathf.CeilToInt(_arena.SiegeRemaining) + "s";
                 _wardLabel.color = Palette.Alert;
+            }
+
+            if (_siltLabel != null)
+            {
+                int stains = _arena.StainCount;
+                int blooms = _arena.BloomCount;
+                int ghosts = _arena.GhostCount;
+                int marks = _arena.StratumCount;
+
+                string silt = "SILT  " + Mathf.RoundToInt(_arena.SiltPressure * 100f) + "%"
+                            + "      MARKS " + marks
+                            + "      STAIN " + stains
+                            + "      BLOOM " + blooms
+                            + "      GHOST " + ghosts;
+
+                _siltLabel.text = silt;
+                _siltLabel.color = blooms > 0 ? Palette.ErasureGlow
+                    : (marks > 0 ? Palette.Muted : Palette.Alpha(Palette.Muted, 0.55f));
             }
 
             _scoreLabel.text = "FOLIOS " + (_arena.Folio - 1) + "      SCORE " + _arena.Score;

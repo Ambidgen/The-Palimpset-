@@ -53,7 +53,14 @@ namespace Palimpsest.EditorTools
             Debug.Log("[Palimpsest] Root added. Press Play to build the page.");
         }
 
-        [MenuItem("Palimpsest/Delete Everything On The Page", priority = 20)]
+        [MenuItem("Palimpsest/Burn The Archive", priority = 20)]
+        public static void BurnArchive()
+        {
+            PageArchive.Burn();
+            Debug.Log("[Palimpsest] The archive is burned. The next folio starts on blank vellum.");
+        }
+
+        [MenuItem("Palimpsest/Delete Everything On The Page", priority = 21)]
         public static void Purge()
         {
             Arena[] arenas = Object.FindObjectsOfType<Arena>();
