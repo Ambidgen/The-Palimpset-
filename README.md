@@ -5,6 +5,10 @@
 You are the last scribe of a page that will not stay erased. Below your vellum, older hands are
 still moving. Your quill can seal the page, but every seal needs ink, and the undertext is hungry.
 
+The page also **remembers**. Every erasure you un-write leaves a stain where it died; every seal
+that survives a layer is pressed into the vellum beneath as a ghost-ring. Both outlive the layer,
+both outlive your death, and both are still there the next time you open the game.
+
 **This repository contains no `.unity` scene, no `.prefab`, no `.mat`, and no `.meta` files.**
 The entire game — page, camera, lighting, characters, audio and interface — is generated from C#
 at runtime. Open the project in Unity, press **Play**, and the world assembles itself.
@@ -30,6 +34,7 @@ To keep a scene around, use the editor menu **Palimpsest → New Folio Scene**.
 | `Shift` / `Q` | **Illuminate** — a radial pulse of clean light |
 | `Esc` | Pause |
 | `R` | Begin a new folio (after the page is lost) |
+| `Backspace` | **Burn the archive** — only on the title card |
 
 ### The Loop
 
@@ -49,6 +54,32 @@ complete the folio.
 * **Scrape** is a bargain: `E` destroys your nearby wards and converts that ink into health and
   a burst of damage. It is the only way out of a collapsing board.
 
+### The Sediment — what the page remembers
+
+This is the layer that makes the title literal. Nothing the page has survived is ever fully
+discarded; it is only written over.
+
+* **Stains** are left wherever an erasure is un-written: a violet blot that **ferments**. A weak
+  blot only smoulders, but a strong one fills with charge, becomes a **bloom**, and starts
+  disgorging fresh erasures from that exact spot. Your own kill count therefore draws the map of
+  your future danger, and it does so in a place you can see and prepare for.
+* **Ghosts** are left by every ward still standing when a layer is completed. They are inert rings
+  with no hazard, and they are the strongest ground on the page: a new ward written over a mark
+  **inherits its resilience**, so rebuilding on your own foundations beats starting from blank
+  vellum.
+* **Ink** cauterises a stain into a ghost and sets a ward on it in the same stroke.
+* **Light** (`Shift`) scours stains toward clean vellum and settles blooms; anything reduced far
+  enough becomes a harmless ghost, so illumination never destroys the page's memory.
+* **Scrape** (`E`) is the only verb that removes marks outright — residue included. It is how you
+  buy capacity back, and it always costs seals.
+* **Silt pressure** (the `SILT` readout) is the running total of stains and blooms. It deepens the
+  underglow, pulls ordinary spawns in sooner, and lets blooms support extra bodies.
+
+The archive persists in `PlayerPrefs`: die on layer five and the next folio still carries your
+graves, washed thin but legible. The title card records how many times the page has been written
+over and how deep anyone has reached. `Backspace` on that card burns it all — the only irreversible
+action in the game, deliberately kept away from a live run.
+
 ---
 
 ## Architecture
@@ -63,12 +94,15 @@ Assets/Scripts/
     CameraRig.cs             fixed isometric-leaning camera, screen shake
     SfxBank.cs               every sound synthesised into AudioClips at startup
     Palette.cs               the single colour source of truth
+    PageArchive.cs           versioned PlayerPrefs persistence of the sediment
   World/
     Arena.cs                 the game: layers, scoring, spawning, quill verbs
     PalimpsestPlayer.cs      the scribe, movement, aiming tracer, cooldowns
     Candle.cs                flame as objective, shelter and countdown
     Ward.cs                  player-placed glyphs that cut erasures
     Erasure.cs               the undertext; seeks flames, drinks wax, hunts the scribe
+    Stratum.cs               one remembered mark: a fermenting stain or a ghost-ring
+    Sediment.cs              every mark, its ageing, blooms, eviction and pressure
   Effects/
     TransientRing.cs         expanding rings for every impact
   UI/
@@ -89,6 +123,11 @@ Assets/Resources/
   System depending on which backend the project has enabled.
 * **Collisionless.** Colliders are stripped from every primitive; all interaction is distance math,
   which keeps the game free of physics configuration.
+* **Memory without assets.** The page's history lives in a versioned JSON blob in `PlayerPrefs`
+  (see `PageArchive`), never in a save file on disk, and reads are defensive: a corrupt archive is
+  discarded rather than allowed to block startup.
+* **Bounded.** At most `Sediment.Capacity` marks exist at once; past that the least significant
+  marks are evicted, so a long-lived archive cannot grow without limit.
 
 ---
 

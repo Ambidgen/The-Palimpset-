@@ -22,6 +22,8 @@ namespace Palimpsest
         float _flash;
         float _seed;
         float _spin;
+        bool _embedded;
+        float _girth = 0.20f;
 
         public static Ward Create(Transform parent, Vector3 position)
         {
@@ -64,7 +66,7 @@ namespace Palimpsest
             {
                 _glyph.localRotation = Quaternion.Euler(_spin * Time.time * 0.6f, _spin * Time.time, _spin * Time.time * 0.35f);
                 float pulse = 0.34f + Mathf.Sin((Time.time + _seed) * 2.4f) * 0.03f;
-                _glyph.localScale = new Vector3(0.20f, pulse, 0.20f);
+                _glyph.localScale = new Vector3(_girth, pulse, _girth);
             }
 
             if (_ring != null)
@@ -75,7 +77,8 @@ namespace Palimpsest
             if (_ringMaterial != null)
             {
                 Color c = Color.Lerp(Palette.InkGlow, Palette.Alert, _flash * 0.75f);
-                MaterialFactory.ApplyEmission(_ringMaterial, c, 1.4f + _flash * 2.5f);
+                float glow = _embedded ? 2.4f : 1.4f;
+                MaterialFactory.ApplyEmission(_ringMaterial, c, glow + _flash * 2.5f);
             }
         }
 
@@ -103,6 +106,35 @@ namespace Palimpsest
             Health = Mathf.Min(MaxHealth, Health + Mathf.Max(0f, amount));
             _flash = Mathf.Max(_flash, 0.25f);
         }
+
+        /// <summary>
+        /// A ward written over an older mark inherits that mark's resilience. The page
+        /// remembers the seal that used to stand here, so the new one stands taller -
+        /// this is the whole reward for building on your own foundations.
+        /// </summary>
+        public void Embed(float resilience)
+        {
+            if (IsBroken || resilience <= 0f) return;
+
+            MaxHealth += resilience;
+            Health = MaxHealth;
+            _embedded = true;
+            _flash = 1f;
+            _girth = 0.232f;
+
+            if (_glyph != null) _glyph.localScale = new Vector3(_girth, 0.34f, _girth);
+
+            // The ring material is per-ward and dynamic, so widening it here is safe;
+            // the glyph uses a shared cached material and must not be mutated.
+            if (_ring != null) _ring.localScale = new Vector3(0.70f, 1f, 0.70f);
+
+            // A ward that inherited strength announces itself when it is set.
+            TransientRing.Spawn(transform.parent, transform.position, 0.25f, 1.35f,
+                Palette.InkGlow, 0.42f, 3.0f);
+        }
+
+        /// <summary>True when this seal was written over an older mark.</summary>
+        public bool IsEmbedded { get { return _embedded; } }
 
         void Break()
         {
