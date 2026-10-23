@@ -268,6 +268,31 @@ namespace Palimpsest
             RefreshScale();
         }
 
+        /// <summary>
+        /// Advances fermentation from outside the normal tick, and reports whether the
+        /// extra charge is what tipped this blot into a bloom.
+        ///
+        /// This exists for the colophon: a hand standing over a stain is still
+        /// interested in the violence done on the ground it wrote, so blots under its
+        /// eye ripen sooner than blots left alone. The charge is capped like any other,
+        /// so a hand can hurry a stain but never invent one out of nothing - a blot
+        /// too faint to bloom still will not.
+        /// </summary>
+        public bool Ferment(float charge)
+        {
+            if (Kind != StratumKind.Stain || IsSpent) return false;
+            if (Strength < FaintStrength) return false;
+
+            bool was = IsBloom;
+            Charge = Mathf.Min(1f, Charge + Mathf.Max(0f, charge));
+
+            if (!IsBloom || was) return false;
+
+            RefreshScale();
+            Flash();
+            return true;
+        }
+
         /// <summary>Strengthens an existing blot when two kills land in the same place.</summary>
         public void Strengthen(float amount)
         {
