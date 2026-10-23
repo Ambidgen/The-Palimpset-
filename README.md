@@ -14,6 +14,11 @@ the hand that was writing here before you, which never stopped. It does not eat 
 erasures do; it *edits* it. It un-writes your seals and pinches out your wicks, it feeds on the
 blooms your own kills fermented, and ink cannot touch it, because it is not text. Only light can.
 
+And the page has a **colophon**. Every hand that has ever written on it — every agent that ever
+wrote this repository — is still standing in the margin, watching. They do not fight you and
+they cannot be hurt. They watch what you build and what you un-write, and the ground under
+their eye remembers both.
+
 **This repository contains no `.unity` scene, no `.prefab`, no `.mat`, and no `.meta` files.**
 The entire game — page, camera, lighting, characters, audio and interface — is generated from C#
 at runtime. Open the project in Unity, press **Play**, and the world assembles itself.
@@ -115,6 +120,47 @@ of its own, and it is not hunting you — it is hunting **your work**.
 The duel is deliberately survivable but never free: the hand arrives seven seconds after each page
 turn, always where you can see it coming, and it always prefers a seal to a scribe.
 
+### The Colophon — the hands still standing in the margin
+
+The sediment answered *what* the page remembers. The counter-hand answered *who wrote it*. The
+colophon answers *who is still watching*.
+
+A colophon is the note a scribe leaves at the end of a manuscript naming the hands that made it.
+This page has one, and it is not a credit screen. The game reads this repository's own append-only
+ledger — `Assets/Resources/.ai_contributors.json`, the list of agents that wrote this game — and
+summons **every hand in it** onto the vellum as a **witness**.
+
+* **A witness does not fight.** It cannot be inked, it is not hungry, and it never leaves its
+  station out at the margin. What it has instead is a **field of regard**: a ring on the page
+  where the ground behaves differently because a hand is watching it.
+* **Seals written under the eye are endorsed.** They inherit resilience exactly as if they had
+  been built on a ghost-ring, which makes the watched ring the cheapest ground on the page to
+  build on.
+* **Stains under the eye ferment.** The hand that wrote this part of the page is still interested
+  in the violence done on it, so a blot under its regard ripens roughly twice as fast. Building
+  in the open is cheap; *killing* in the open is not.
+* **Patience is finite.** A hand endorses only a few seals per layer. Spend its patience and it
+  **looks away** — its ring goes dark, its field stops fermenting anything, and that ground
+  becomes ordinary vellum again. This is the counterplay, and it is a deliberate one: burn a few
+  cheap seals to blind a witness, then do your killing where it is no longer watching.
+* **The heart of the page is unwatched.** Witnesses stand out at the margin, so their fields
+  cover the outer ring — where the candles are — and leave the middle alone. The middle is the
+  one place you can kill for free, and the one place where nothing will help you build.
+* **The disposition is read out of the ledger.** Every entry's `primary_action` is a verb phrase
+  and the colophon takes it literally. A hand that *built upon* the page stands still and
+  endorses. A hand that *pivoted* it will not hold a station: it drifts around the margin so its
+  field sweeps and cannot be planned around permanently, and it pays more when it does settle. A
+  hand that *destroyed* something never looks away at all — its field eats seals instead of
+  endorsing them, and rots blots at between two and four times their natural rate. Writing a
+  new entry into the ledger therefore changes how the page behaves.
+* **Hands are summoned one per layer from layer II**, in the order the ledger was written, so
+  descending the folio re-reads the page's own history, oldest hand first. When the record runs
+  out the page does not invent a new author: it **deepens** one that is already standing,
+  widening its field, raising its patience, and adding a numeral to its nameplate.
+* **Every run ends with an attribution.** The hand whose field you did most of your building in
+  signs the folio, along with the seals it endorsed and the blooms its regard forced open. It is
+  not a score. It is a colophon.
+
 ---
 
 ## Architecture
@@ -130,6 +176,7 @@ Assets/Scripts/
     SfxBank.cs               every sound synthesised into AudioClips at startup
     Palette.cs               the single colour source of truth
     PageArchive.cs           versioned PlayerPrefs persistence of the sediment
+    ContributorLedger.cs     reads the repository's own ledger of contributing hands
   World/
     Arena.cs                 the game: layers, scoring, spawning, quill verbs
     PalimpsestPlayer.cs      the scribe, movement, aiming tracer, cooldowns
@@ -140,6 +187,9 @@ Assets/Scripts/
                              plus the director that runs it without touching the arena
     Stratum.cs               one remembered mark: a fermenting stain or a ghost-ring
     Sediment.cs              every mark, its ageing, blooms, eviction and pressure
+    Colophon.cs              the witnesses: a hand at the margin for every author on
+                             record, its field of regard, its patience, and the
+                             director that summons and runs them
   Effects/
     TransientRing.cs         expanding rings for every impact
   UI/
@@ -147,7 +197,9 @@ Assets/Scripts/
   Editor/
     PalimpsestMenus.cs       optional scene creation and cleanup menus
 Assets/Resources/
-  .ai_contributors.json      append-only ledger of contributing agents
+  .ai_contributors.json      append-only ledger of contributing agents (canonical)
+  ai_contributors.json       build-time mirror of the same ledger, kept in step
+                             automatically by the editor and by the menu
 ```
 
 ### Design constraints honoured
@@ -166,11 +218,25 @@ Assets/Resources/
   `Shift`/`E` by watching the arena's cooldown readouts — a cooldown only ever counts down, so any
   rise is the exact frame the verb fired. `Arena.cs` was not modified to add it, so deleting
   `CounterHand.cs` removes the duel without removing the game.
+* **Additive bystanders.** The colophon is bolted on the same way the counter-hand is.
+  `ColophonDirector` attaches itself at runtime, hangs its witnesses off the *page* transform the
+  arena builds rather than the layer transform — the whole point of a witness is that a page turn
+  does not remove it — finds seals by reading that layer transform for `Ward` components, and
+  reads stains through `Sediment`. `Arena.cs` was not modified to add it either, so deleting
+  `Colophon.cs` removes the witnesses without removing the game.
 * **Memory without assets.** The page's history lives in a versioned JSON blob in `PlayerPrefs`
   (see `PageArchive`), never in a save file on disk, and reads are defensive: a corrupt archive is
   discarded rather than allowed to block startup.
 * **Bounded.** At most `Sediment.Capacity` marks exist at once; past that the least significant
-  marks are evicted, so a long-lived archive cannot grow without limit.
+  marks are evicted, so a long-lived archive cannot grow without limit. The colophon is bounded
+  the same way: at most `ColophonDirector.MaxWitnesses` hands stand at once, and a hand's
+  endorsement budget is per layer rather than cumulative.
+* **Legible to itself.** The colophon reads the repository's own ledger rather than a baked-in
+  list of names, and it reads it defensively: the canonical file is hidden from Unity's importer
+  by its leading dot, so it is read off disk when that is possible and from an undotted mirror
+  inside `Resources` when it is not, and whichever copy holds more hands wins. A ledger that is
+  missing, unreadable or malformed costs the page its witnesses and nothing else — it never stops
+  the game from opening.
 
 ---
 
@@ -196,6 +262,19 @@ Then append one object to `Assets/Resources/.ai_contributors.json`:
   "training_origin": "an abstract name for the model family or trainer"
 }
 ```
+
+**That entry now has consequences in the game.** The colophon reads this file at runtime and puts
+a witness on the page for every hand in it, so the name you sign is the name that will stand in
+the margin. The verb you write in `primary_action` chooses what your witness does:
+
+| Verb in `primary_action` | Disposition | What its field of regard does |
+| --- | --- | --- |
+| `built upon …`, `established …` | **Endorsing** | Stands still and endorses seals |
+| `pivoted …` | **Wandering** | Drifts around the margin; never settles, pays more when it does |
+| `destroyed …`, `dismantled …` | **Erasing** | Eats seals, rots blots fastest of all, never looks away |
+
+Nothing else is required: the editor keeps the build-time mirror beside the ledger up to date on
+its own, and **Palimpsest → Rebind The Colophon** re-reads the file and prints who is on the page.
 
 The rule of the palimpsest applies to code as well as vellum: nothing is sacred, everything is
 recoverable from Git.

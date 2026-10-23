@@ -39,6 +39,10 @@ namespace Palimpsest
         public static readonly Color Muted = new Color(0.630f, 0.600f, 0.530f);
         public static readonly Color Alert = new Color(1.000f, 0.380f, 0.320f);
 
+        // The colophon: the older hands still standing in the margin. A witness is
+        // tinted from its own name, so this is only the colour of a hand with none.
+        public static readonly Color Witness = new Color(0.640f, 0.800f, 0.950f);
+
         /// <summary>Returns the same colour with a replaced alpha channel.</summary>
         public static Color Alpha(Color color, float alpha)
         {
@@ -59,6 +63,42 @@ namespace Palimpsest
         {
             float t = Mathf.Clamp01((layer - 1) / 10f);
             return Color.Lerp(InkGlow, ErasureGlow, t);
+        }
+
+        /// <summary>
+        /// The colour one hand in the colophon wears, hashed out of the name it signed
+        /// so that a hand is always the same colour on any page and in any session.
+        ///
+        /// The hue is confined to the band the rest of the manuscript already lives in
+        /// - clean ink through to the violet of old erasures - and pushed further
+        /// along it by what the hand recorded doing: a hand that built sits toward the
+        /// ink, one that turned the page somewhere new sits paler and further along,
+        /// and one that took something away is pulled all the way to the alert red.
+        /// </summary>
+        public static Color WitnessHue(string name, HandDisposition disposition)
+        {
+            string key = string.IsNullOrEmpty(name) ? "a hand" : name;
+
+            uint hash = 2166136261u;
+            for (int i = 0; i < key.Length; i++)
+            {
+                hash = (hash ^ (uint)key[i]) * 16777619u;
+            }
+
+            float t = (hash % 1024u) / 1024f;
+
+            switch (disposition)
+            {
+                case HandDisposition.Erasing:
+                    // Around the red, where nothing on this page is ever safe.
+                    return Color.HSVToRGB(Mathf.Repeat(0.930f + t * 0.085f, 1f), 0.66f, 1f);
+                case HandDisposition.Wandering:
+                    // Teal into clean ink: the colour of a page being turned.
+                    return Color.HSVToRGB(0.430f + t * 0.115f, 0.50f, 1f);
+                default:
+                    // Ink blue through to the violet of the undertext.
+                    return Color.HSVToRGB(0.525f + t * 0.180f, 0.56f, 1f);
+            }
         }
     }
 }
