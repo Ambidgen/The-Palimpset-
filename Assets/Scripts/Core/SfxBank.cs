@@ -18,7 +18,8 @@ namespace Palimpsest
         Denied,
         Surge,
         Silt,
-        Scour
+        Scour,
+        Gloss
     }
 
     /// <summary>
@@ -72,6 +73,7 @@ namespace Palimpsest
             _clips[Sfx.Surge] = Tone("pal_surge", 0.75f, 92f, 50f, 0.35f, 1.6f, 0.30f);
             _clips[Sfx.Silt] = Tone("pal_silt", 0.70f, 70f, 140f, 0.85f, 1.2f, 0.26f);
             _clips[Sfx.Scour] = Tone("pal_scour", 0.45f, 640f, 240f, 0.45f, 2.2f, 0.24f);
+            _clips[Sfx.Gloss] = Tone("pal_gloss", 0.30f, 580f, 440f, 0.08f, 2.8f, 0.22f);
 
             _drone.clip = DroneClip("pal_drone", 8f);
             _drone.volume = 0.09f;

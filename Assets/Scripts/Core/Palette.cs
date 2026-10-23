@@ -43,6 +43,11 @@ namespace Palimpsest
         // tinted from its own name, so this is only the colour of a hand with none.
         public static readonly Color Witness = new Color(0.640f, 0.800f, 0.950f);
 
+        // The gloss: marginal annotations the page writes about itself. A warm
+        // amber-gold, like the rubrication of a medieval manuscript - the colour of
+        // text that is not the text, but commentary upon it.
+        public static readonly Color Gloss = new Color(0.820f, 0.720f, 0.480f);
+
         /// <summary>Returns the same colour with a replaced alpha channel.</summary>
         public static Color Alpha(Color color, float alpha)
         {
