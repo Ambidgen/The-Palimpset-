@@ -19,6 +19,13 @@ wrote this repository — is still standing in the margin, watching. They do not
 they cannot be hurt. They watch what you build and what you un-write, and the ground under
 their eye remembers both.
 
+And the page **speaks**. It has been written over so many times that the vellum has developed a
+voice. **The gloss** is the marginal commentary it writes about itself: a fragment of amber text
+that appears where something significant happened — an erasure un-written, a flame snuffed, a
+layer turned, the counter-hand at work. Each annotation stays briefly, then fades. But it is
+not inert: an erasure that passes through a gloss takes a quiet wound from the weight of the
+page's own text. The margin defends itself by being there.
+
 **This repository contains no `.unity` scene, no `.prefab`, no `.mat`, and no `.meta` files.**
 The entire game — page, camera, lighting, characters, audio and interface — is generated from C#
 at runtime. Open the project in Unity, press **Play**, and the world assembles itself.
@@ -161,6 +168,35 @@ summons **every hand in it** onto the vellum as a **witness**.
   signs the folio, along with the seals it endorsed and the blooms its regard forced open. It is
   not a score. It is a colophon.
 
+### The Gloss — the page speaks in the margin
+
+The sediment answered *what* the page remembers. The counter-hand answered *who wrote it*. The
+colophon answered *who is still watching*. The gloss answers *what the page says about itself*.
+
+A gloss is a reader's note in the margin of a manuscript: commentary, not text. This page has
+been written over so many times that the vellum has developed a voice. It annotates what happens
+to it — in amber-gold fragments that fade as quickly as they appeared.
+
+* **A gloss appears where something happened.** An erasure is un-written: the page writes *"HERE
+  THE UNDERTEXT WAS SILENCED"* at the margin nearby. A candle goes dark: *"A WICK WENT DARK
+  HERE"*. A layer turns: *"THE PAGE TURNS"*. The counter-hand un-writes a seal: *"THE RIVAL
+  SCRIBE WORKED HERE"*. When nothing dramatic is happening the page still mutters: *"THE VELLUM
+  GROWS HEAVY"*, *"BENEATH THIS WORD, ANOTHER"*.
+* **Each gloss is a small ring of amber light on the vellum.** It stays for about twenty-four
+  seconds, fading in and out. A floating text label above it shows the annotation in italic,
+  tracked to the gloss's world position so it reads in the margin of the page.
+* **The page's own text impedes the undertext.** An erasure that passes through a gloss takes
+  a small, steady wound — the weight of the annotation burns it. The damage is a gradient: the
+  centre of the field burns most, the edge barely at all, and it scales with layer depth. A gloss
+  is not a weapon; it is a thickening of the page's text. The margin defends itself by being there.
+* **At most eight glosses are on the page at once.** The oldest is removed when a new one arrives
+  past that limit. A layer turn suppresses new glosses for a short settle time so the arena's
+  own cleanup does not produce a flood of annotations.
+* **The gloss is additive.** `GlossDirector` attaches itself at runtime, hangs its glosses off the
+  page transform (not the layer, so they survive page turns), reads erasures from the layer root,
+  reads candles through the arena's public API, and reads the counter-hand through its director.
+  `Arena.cs` was not modified to add it.
+
 ---
 
 ## Architecture
@@ -190,6 +226,10 @@ Assets/Scripts/
     Colophon.cs              the witnesses: a hand at the margin for every author on
                              record, its field of regard, its patience, and the
                              director that summons and runs them
+    Gloss.cs                 the page's own voice: marginal annotations that appear
+                             where events unfold, each a small wound to the undertext
+                             that passes through it, plus the director that watches
+                             the arena for events and generates the annotations
   Effects/
     TransientRing.cs         expanding rings for every impact
   UI/
@@ -224,6 +264,11 @@ Assets/Resources/
   does not remove it — finds seals by reading that layer transform for `Ward` components, and
   reads stains through `Sediment`. `Arena.cs` was not modified to add it either, so deleting
   `Colophon.cs` removes the witnesses without removing the game.
+* **Additive commentary.** The gloss follows the same pattern. `GlossDirector` attaches itself at
+  runtime, reads erasures from the layer root, candles from the arena's public API, and the
+  counter-hand through its director. It hangs its glosses off the page transform so they survive
+  layer turns. `Arena.cs` was not modified, so deleting `Gloss.cs` removes the page's voice without
+  removing the game.
 * **Memory without assets.** The page's history lives in a versioned JSON blob in `PlayerPrefs`
   (see `PageArchive`), never in a save file on disk, and reads are defensive: a corrupt archive is
   discarded rather than allowed to block startup.
