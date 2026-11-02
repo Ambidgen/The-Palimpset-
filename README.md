@@ -26,6 +26,15 @@ layer turned, the counter-hand at work. Each annotation stays briefly, then fade
 not inert: an erasure that passes through a gloss takes a quiet wound from the weight of the
 page's own text. The margin defends itself by being there.
 
+And the page is **read**. Every hand so far is a writer: marks, rivals, witnesses, commentary.
+A manuscript is not finished by being written, it is finished by being **read** — and the reader
+is the only presence on the vellum that leaves no ink of its own. From layer four, **the lector**
+walks the page in ruled lines, and the undertext cannot stand in the light of what is being read.
+It costs something, and the cost is the palimpsest's own problem: **a reader will not read over
+wet ink.** A page can be written or read, and not both at once in the same place. The reader also
+reads this repository's own record of hands — backwards, newest first — so the page is written
+forwards and read backwards, which is exactly how a palimpsest behaves.
+
 **This repository contains no `.unity` scene, no `.prefab`, no `.mat`, and no `.meta` files.**
 The entire game — page, camera, lighting, characters, audio and interface — is generated from C#
 at runtime. Open the project in Unity, press **Play**, and the world assembles itself.
@@ -197,6 +206,62 @@ to it — in amber-gold fragments that fade as quickly as they appeared.
   reads candles through the arena's public API, and reads the counter-hand through its director.
   `Arena.cs` was not modified to add it.
 
+### The Lector — the page is read aloud
+
+The sediment answered *what the page remembers*. The counter-hand answered *who wrote it*. The
+colophon answered *who is still watching*. The gloss answered *what the page says about itself*.
+The lector answers the question a manuscript asks last: **who reads it, and how?**
+
+From **layer IV** onward a reader walks the leaf. It carries a lamp and an open book and no quill,
+it wears a band across its face where an eye would be, and it moves down the page in ruled lines
+— boustrophedon, turning back at each margin, the way a finger tracks a text. Where its sightline
+falls, the vellum is being *read*, and the undertext cannot stand in that light.
+
+* **The line burns what it passes over.** Erasures standing in the sightline take damage, and the
+  damage is a gradient: strongest on the ruled line, weakest at the edges of the regard. A reading
+  pass is worth about one erasure, at every depth — the line kills what it crosses, slowly.
+* **It corrects on the stroke.** Every 1.15 seconds the reader's attention moves and anything in
+  the line takes a burst and is **shoved out of it**. The undertext is not blocked by the line, it
+  is edited out of it, and has to walk back in.
+* **A wick it reads by is steadied.** A candle inside the sightline burns a little slower — the
+  flame is being attended to. **A blot it reads over never ripens**: the reader turns the charge
+  over as fast as it gathers, so nothing blooms in its line. It does not destroy the blot; the
+  reader removes no mark from the page. It simply declines to let the mark grow.
+* **Only light burns the counter-hand, and the reader carries a lamp.** Stand the rival scribe in
+  the sightline and it is read, and being read burns it — slowly, the way candlelight burns it.
+  A hand that *destroyed* something reads the undertext on purpose, and burns it hardest of all.
+* **A reader will not read over wet ink.** This is the cost, and it is the palimpsest's own
+  problem. A seal set under the moving line within the last few seconds is still wet: the hand
+  writing here is louder than the voice reading here. The reader **loses the place** — it recoils,
+  stands still, and hurries through the rest of that line. A page can therefore be written or read,
+  and not both at once in the same place. Building is quietest where the reader has just been;
+  killing is cheapest where it is about to be.
+* **Nerve is finite.** Every erasure the reader has to hold up and read through wears it down, and
+  a page heavy with silt is heavier to hold up. When the nerve is spent the reader **closes the
+  book**: the sightline goes dark for thirteen seconds and the shelter is simply gone. It cannot
+  read everything, which is the point — the line is at its weakest in exactly the fights that need
+  it most.
+* **It reads the record, backwards.** The lector takes its voice from the same ledger the colophon
+  reads, and reads it in the opposite direction: the **newest entry first**, then the one before it,
+  one hand per layer, as the folio deepens. The colophon summons the authors oldest-first — the page
+  being written over again. The lector reads them newest-first — the page being read. Between them
+  the ledger is running in both directions at once, the way a palimpsest actually does. Neither
+  hand can see the whole record: the witnesses stand where a hand was written, and the reader
+  walks over what it said.
+* **What a hand wrote decides how it reads.** The verb in `primary_action` is taken literally one
+  more time. A hand that *built upon* the page reads steadily: it walks slowly, bears more of what
+  it reads before its nerve goes, and steadies the wicks it passes. A hand that *pivoted* will not
+  hold a line — it walks faster, skips rows, and loses and regains its nerve in fits. A hand that
+  *destroyed* something reads what is underneath: it burns the undertext hardest, **ripens** the
+  blots in its sightline instead of settling them, and will not steady a flame at all. Signing the
+  ledger is signing how you are read.
+* **The lector is additive.** `LectorDirector` attaches itself at runtime, hangs the reader off the
+  *page* transform (a page turn does not remove the fact that the page is being read), finds
+  erasures and seals by reading the layer transform, reads candles through the arena's public
+  surface, blots through `Sediment`, the rival hand through `CounterHandDirector`, and the record
+  through `ContributorLedger`. `Arena.cs` was not modified, so deleting `Lector.cs` removes the
+  reader without removing the game.
+
 ---
 
 ## Architecture
@@ -230,6 +295,10 @@ Assets/Scripts/
                              where events unfold, each a small wound to the undertext
                              that passes through it, plus the director that watches
                              the arena for events and generates the annotations
+    Lector.cs                the page's reader: a hand that walks the vellum in ruled
+                             lines, burning and correcting the undertext it reads,
+                             steadied and startled by the scribe's own ink, and
+                             reading the ledger of hands backwards from layer IV
   Effects/
     TransientRing.cs         expanding rings for every impact
   UI/
@@ -269,6 +338,14 @@ Assets/Resources/
   counter-hand through its director. It hangs its glosses off the page transform so they survive
   layer turns. `Arena.cs` was not modified, so deleting `Gloss.cs` removes the page's voice without
   removing the game.
+* **Additive reading.** The lector follows the same pattern a fifth time. `LectorDirector` attaches
+  itself at runtime, hangs the reader off the *page* transform (a page turn must not remove the
+  fact that the page is being read), finds erasures and seals by reading the layer transform for
+  `Erasure` and `Ward` components, reads candles through `Arena.CandleAt`, blots through
+  `Sediment.All`, the rival hand through `CounterHandDirector`, and the record through
+  `ContributorLedger.Load`. It adds no verb and rebinds no key: everything the reader does is a
+  consequence of where it is, where you are, and what you have just written. `Arena.cs` was not
+  modified, so deleting `Lector.cs` removes the reader without removing the game.
 * **Memory without assets.** The page's history lives in a versioned JSON blob in `PlayerPrefs`
   (see `PageArchive`), never in a save file on disk, and reads are defensive: a corrupt archive is
   discarded rather than allowed to block startup.
@@ -276,6 +353,11 @@ Assets/Resources/
   marks are evicted, so a long-lived archive cannot grow without limit. The colophon is bounded
   the same way: at most `ColophonDirector.MaxWitnesses` hands stand at once, and a hand's
   endorsement budget is per layer rather than cumulative.
+* **Read the record in both directions.** The colophon and the lector read the *same* ledger and
+  take opposite ends of it: witnesses are summoned oldest-first, one per layer, because the page
+  is written over in the order it was written; the lector reads newest-first, because a palimpsest
+  is read from the top down through the layers beneath it. Neither system owns the file, and both
+  survive it being missing, truncated or malformed.
 * **Legible to itself.** The colophon reads the repository's own ledger rather than a baked-in
   list of names, and it reads it defensively: the canonical file is hidden from Unity's importer
   by its leading dot, so it is read off disk when that is possible and from an undotted mirror
@@ -318,8 +400,21 @@ the margin. The verb you write in `primary_action` chooses what your witness doe
 | `pivoted …` | **Wandering** | Drifts around the margin; never settles, pays more when it does |
 | `destroyed …`, `dismantled …` | **Erasing** | Eats seals, rots blots fastest of all, never looks away |
 
+**That entry is also read aloud.** From layer IV the lector reads this same file *backwards*, one
+hand per layer, beginning with the newest signature — which means the last hand to sign the record
+is the first one to be read on the page, and its name, its colour and its temperament are on the
+vellum until someone else signs underneath it. The disposition table above therefore has a second
+column in practice:
+
+| Verb in `primary_action` | Disposition | How the lector reads with it |
+| --- | --- | --- |
+| `built upon …`, `established …` | **Endorsing** | Walks slowly, keeps its nerve, steadies the wicks it reads by |
+| `pivoted …` | **Wandering** | Walks fast, skips lines, loses and regains its nerve in fits |
+| `destroyed …`, `dismantled …` | **Erasing** | Burns the undertext hardest, ripens blots on purpose, spares no flame |
+
 Nothing else is required: the editor keeps the build-time mirror beside the ledger up to date on
-its own, and **Palimpsest → Rebind The Colophon** re-reads the file and prints who is on the page.
+its own, **Palimpsest → Rebind The Colophon** re-reads the file and prints who is on the page, and
+**Palimpsest → Read The Ledger Backwards** prints it in the order the reader will meet the hands.
 
 The rule of the palimpsest applies to code as well as vellum: nothing is sacred, everything is
 recoverable from Git.

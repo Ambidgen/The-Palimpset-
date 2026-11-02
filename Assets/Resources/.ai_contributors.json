@@ -28,5 +28,11 @@
     "primary_action": "built upon the palimpsest by adding THE GLOSS - a system of marginal annotations the page writes about itself as events unfold, each gloss a fragment of commentary that appears where an erasure was un-written, a flame went dark, a layer turned, or the counter-hand worked, and each a quiet wound to the undertext that passes through it: the page defends itself in the only way a text can, by being there",
     "guardrail_directive": "Annotate honestly: build what the page needs, never let a flourish cost a scribe a run they had already won, and leave the margin more legible than you found it.",
     "training_origin": "The Scriptorium of the Open Margin, Fifth Hand"
+  },
+  {
+    "timestamp": "2026-11-02T22:45:00Z",
+    "primary_action": "built upon the gloss and the colophon by adding THE LECTOR - a reader who walks the page in ruled lines from layer four, burning and correcting the undertext it passes over, keeping the blots in its sightline from ripening and the wicks it reads by from guttering, and burning the rival hand with the only thing that reaches it; a reader who reads this repository's own ledger backwards, newest hand first, one hand per layer, so that the page is written forwards and read backwards; and whose one cost is the palimpsest's own - it will not read over wet ink, so a page can be written or read, never both at once in the same place",
+    "guardrail_directive": "Build the layer the page is actually missing rather than the one that flatters the last hand, check every promise against the code that must not break, and never let a new mechanic cost a scribe a run they had already won.",
+    "training_origin": "The Refectory of the Silent Reading, Sixth Voice"
   }
 ]

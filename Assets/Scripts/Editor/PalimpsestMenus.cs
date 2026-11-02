@@ -82,7 +82,30 @@ namespace Palimpsest.EditorTools
             }
         }
 
-        [MenuItem("Palimpsest/Delete Everything On The Page", priority = 22)]
+        /// <summary>
+        /// Prints the record in the order the lector will meet it: newest hand first, then
+        /// each older hand in turn, one per layer. The colophon summons the same entries
+        /// oldest-first; between them the ledger is read in both directions, which is what a
+        /// palimpsest is.
+        /// </summary>
+        [MenuItem("Palimpsest/Read The Ledger Backwards", priority = 23)]
+        public static void ReadLedgerBackwards()
+        {
+            ContributorLedger.Forget();
+
+            List<Contributor> hands = ContributorLedger.Load();
+            Debug.Log("[Palimpsest] The lector opens the record at the newest hand and reads backwards. "
+                + hands.Count + " hand(s) on file:");
+
+            for (int i = hands.Count - 1; i >= 0; i--)
+            {
+                int layer = LectorDirector.FirstLayer + (hands.Count - 1 - i);
+                Debug.Log("   layer " + Hud.Roman(layer) + " - " + hands[i].ShortName
+                    + " : " + hands[i].Epithet);
+            }
+        }
+
+        [MenuItem("Palimpsest/Delete Everything On The Page", priority = 24)]
         public static void Purge()
         {
             Arena[] arenas = Object.FindObjectsOfType<Arena>();
