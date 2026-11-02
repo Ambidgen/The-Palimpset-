@@ -48,6 +48,13 @@ namespace Palimpsest
         // text that is not the text, but commentary upon it.
         public static readonly Color Gloss = new Color(0.820f, 0.720f, 0.480f);
 
+        // The lector: the hand that reads the page instead of writing on it. Bone linen
+        // for the figure, lamplight for the sightline it walks down. These are the only
+        // colours in the manuscript that are never used to mark anything - a reader is
+        // the one presence on the vellum that leaves no ink of its own.
+        public static readonly Color Lector = new Color(0.880f, 0.850f, 0.760f);
+        public static readonly Color Reading = new Color(0.760f, 0.850f, 0.980f);
+
         /// <summary>Returns the same colour with a replaced alpha channel.</summary>
         public static Color Alpha(Color color, float alpha)
         {
