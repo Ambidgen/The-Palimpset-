@@ -55,6 +55,14 @@ namespace Palimpsest
         public static readonly Color Lector = new Color(0.880f, 0.850f, 0.760f);
         public static readonly Color Reading = new Color(0.760f, 0.850f, 0.980f);
 
+        // The watermark: the wire of the mould, and the light that gets through it. Wire is
+        // the colour of a sheet held up against a lamp - warmer than the reader's lamplight
+        // and paler than the gloss's amber, because it is not text and not commentary, it is
+        // the paper showing its own making. Watermark is the same colour with the light
+        // taken out of it, for the quiet line that says how much wire is left.
+        public static readonly Color Wire = new Color(0.930f, 0.880f, 0.740f);
+        public static readonly Color Watermark = new Color(0.520f, 0.480f, 0.380f);
+
         /// <summary>Returns the same colour with a replaced alpha channel.</summary>
         public static Color Alpha(Color color, float alpha)
         {

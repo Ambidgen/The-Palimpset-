@@ -35,6 +35,18 @@ wet ink.** A page can be written or read, and not both at once in the same place
 reads this repository's own record of hands — backwards, newest first — so the page is written
 forwards and read backwards, which is exactly how a palimpsest behaves.
 
+And the page is **made**. Every hand so far — the sediment, the counter-hand, the witnesses, the
+commentary, the reader — was a hand that wrote on the leaf, watched it, or read it. But a palimpsest
+is not only a record of who wrote: it is paper, and the paper had to exist first. **The watermark**
+is the one hand on the page that made the sheet instead of writing on it. It wrote nothing, signed
+no colophon, and is therefore the only presence on the vellum that appears in no ledger. It is the
+wire of the mould: seven ribs pressed into the leaf before the first word, and a maker's mark tied
+into them at a single fixed point that is the same in every folio. Seals written on the wire are
+keyed; silt left on it conducts; the sheet tears where it was pulled tightest; and when you
+illuminate the page the whole sheet flares, and the ribs come up through the vellum as a grid that
+the undertext cannot cross without being cut by it. The margin has an author after all, and it is
+the paper.
+
 **This repository contains no `.unity` scene, no `.prefab`, no `.mat`, and no `.meta` files.**
 The entire game — page, camera, lighting, characters, audio and interface — is generated from C#
 at runtime. Open the project in Unity, press **Play**, and the world assembles itself.
@@ -262,6 +274,61 @@ falls, the vellum is being *read*, and the undertext cannot stand in that light.
   through `ContributorLedger`. `Arena.cs` was not modified, so deleting `Lector.cs` removes the
   reader without removing the game.
 
+### The Watermark — the hand that made the sheet
+
+The sediment answered *what the page remembers*. The counter-hand answered *who wrote it*. The
+colophon answered *who is still watching*. The gloss answered *what the page says about itself*.
+The lector answered *who reads it, and how*. The watermark answers the question underneath all of
+them: **who made the sheet?**
+
+A watermark is the maker's mark pressed into wet paper by the wire of the mould, and it is the one
+thing on a leaf that is older than every word on it. It is not an author. The hand that laid the
+wire wrote nothing and signed no colophon, which is why it is the only hand on the page that appears
+in no ledger at all. It is not even a presence: it is ground — seven chain lines across the leaf,
+the fine laid grain of the sheet, and one figure tied into the wire at a fixed place. Every folio
+starts as a fresh overwriting of the same paper, so the wire is the one mark on the palimpsest that
+is the same in every reading of it.
+
+* **It is a place, not a person.** There is no figure, no field of regard and no patience here.
+  The watermark is geometry: seven ribs, a grain, and a maker's mark. It hangs off the *page*
+  transform, so a page turn does not remove the fact that the sheet was made, and it is the only
+  thing on the vellum older than the first sentence.
+* **The wire keys what is written on it.** A seal set within half a unit of a rib inherits `10`
+  health from the wire, because wire holds ink better than loose vellum. The wire can only take so
+  much of that per layer — `4` seals at layer I, rising to `8` — with the maker's mark's countersign
+  on top of that, and the readout under `SILT` says how much is left. Keying a seal is free; the
+  ground is the reward.
+* **The wire conducts what dies on it.** A stain lying on a rib gathers charge faster than one on
+  plain vellum (`0.014` a second), because the wire carries the undertext the way it once carried
+  water. The cheapest ground on the page to build on is therefore also the ground where your own
+  killing ripens soonest. Building cheap and killing clean are, once again, different places.
+* **The wire tears.** A keyed seal that falls leaves residue of its own where the sheet was pulled
+  tightest, on top of the seal you have already lost. A countersigned seal is the exception: the
+  mark is older than the seal, so it keeps the ring of it and leaves a ghost instead of a stain.
+  Scraping (`E`) is your own verb and never tears the wire — the sheet does not punish you for
+  taking your own work back.
+* **Wax pools against the wire.** A wick standing on a rib burns a little slower, because the wire
+  cools the wax against it.
+* **The maker's mark is the one fixed point on the page.** It stands at the same place in every
+  folio, and it is the only ground that does not move between runs. Stains in its field are soured
+  steadily — the sheet's own memory resists being written over there — and **one seal per layer**
+  written inside it is *countersigned*: `+20` health, the strongest ground the page offers.
+* **Held to the light.** A watermark is invisible in reflected light and unmistakable in transmitted
+  light. When you illuminate the page (`Shift`), the whole sheet flares for `6.5` seconds: the grain
+  and the ribs come up through the vellum, the mark names itself in the margin, and anything of the
+  undertext crossing a rib takes `3.4 + 0.45 × layer` damage a second. It costs nothing beyond the
+  illumination you were going to spend anyway. The wire is not a wall — it is a grid you can herd
+  the undertext onto, and the only way to see the paper's own making.
+* **The watermark is additive.** `WatermarkDirector` attaches itself at runtime, hangs the wire off
+  the *page* transform, reads seals and erasures out of the layer transform, stains through
+  `Sediment`, candles through `Arena.CandleAt`, and detects `Shift` by watching
+  `Arena.IlluminateCooldownRemaining` rise. It adds no verb and rebinds no key. `Arena.cs` was not
+  modified, so deleting `Watermark.cs` removes the sheet's own ground without removing the game.
+* **It is not in the ledger.** Every other layer reads the repository's record of hands. The
+  watermark cannot: the papermaker never signed it. The page it is written on is the only record of
+  the hand that made it, which is the point of the layer. `Palimpsest → Read The Sheet` prints the
+  wire without entering Play mode.
+
 ---
 
 ## Architecture
@@ -299,6 +366,10 @@ Assets/Scripts/
                              lines, burning and correcting the undertext it reads,
                              steadied and startled by the scribe's own ink, and
                              reading the ledger of hands backwards from layer IV
+    Watermark.cs             the page's maker: the wire of the mould and the maker's
+                             mark, which key the seals written on them, conduct the
+                             silt left on them, tear when a keyed seal falls, and are
+                             only fully legible when the sheet is held to the light
   Effects/
     TransientRing.cs         expanding rings for every impact
   UI/
@@ -346,6 +417,14 @@ Assets/Resources/
   `ContributorLedger.Load`. It adds no verb and rebinds no key: everything the reader does is a
   consequence of where it is, where you are, and what you have just written. `Arena.cs` was not
   modified, so deleting `Lector.cs` removes the reader without removing the game.
+* **Additive ground.** The watermark follows the same pattern a sixth time, with one difference: it
+  is the only layer that is not an agent. `WatermarkDirector` attaches itself at runtime, hangs the
+  wire off the *page* transform (the sheet outlives every page turn), finds seals and erasures by
+  reading the layer transform, stains through `Sediment.All`, candles through `Arena.CandleAt`, and
+  detects the illuminate verb by watching `Arena.IlluminateCooldownRemaining` rise, exactly as the
+  counter-hand does. It adds no verb either, and it cannot read the ledger, because the hand that
+  made the paper never signed it. `Arena.cs` was not modified, so deleting `Watermark.cs` removes
+  the sheet's own ground without removing the game.
 * **Memory without assets.** The page's history lives in a versioned JSON blob in `PlayerPrefs`
   (see `PageArchive`), never in a save file on disk, and reads are defensive: a corrupt archive is
   discarded rather than allowed to block startup.
@@ -415,6 +494,12 @@ column in practice:
 Nothing else is required: the editor keeps the build-time mirror beside the ledger up to date on
 its own, **Palimpsest → Rebind The Colophon** re-reads the file and prints who is on the page, and
 **Palimpsest → Read The Ledger Backwards** prints it in the order the reader will meet the hands.
+
+**There is one hand on the page this file cannot reach.** The watermark is older than the ledger:
+the papermaker wrote nothing, so it is the only presence on the vellum with no entry here, no
+disposition and no entry to sign. Signing this record makes you a witness and a voice; the sheet you
+sign it on was made by someone who never did. **Palimpsest → Read The Sheet** prints that ground —
+the seven ribs and the maker's mark — without entering Play mode.
 
 The rule of the palimpsest applies to code as well as vellum: nothing is sacred, everything is
 recoverable from Git.

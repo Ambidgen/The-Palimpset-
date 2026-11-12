@@ -105,6 +105,32 @@ namespace Palimpsest.EditorTools
             }
         }
 
+        /// <summary>
+        /// Prints the ground all the other hands wrote on. The watermark is the one system on
+        /// the page that is not in the ledger, because the hand that made the sheet never
+        /// signed anything - it only laid the wire. This menu reads the sheet back without
+        /// entering Play mode.
+        /// </summary>
+        [MenuItem("Palimpsest/Read The Sheet", priority = 25)]
+        public static void ReadTheSheet()
+        {
+            Debug.Log("[Palimpsest] The sheet was made before the first hand signed the ledger: "
+                + Watermark.ChainCount + " chain lines across a leaf of radius "
+                + Watermark.SheetRadius.ToString("F2") + ".");
+
+            for (int i = 0; i < Watermark.ChainCount; i++)
+            {
+                Debug.Log("   rib " + Hud.Roman(i + 1) + " at z = "
+                    + Watermark.ChainZ(i).ToString("F2"));
+            }
+
+            Vector3 mark = Watermark.MarkPosition;
+            Debug.Log("[Palimpsest] The maker's mark stands at x " + mark.x.ToString("F2")
+                + ", z " + mark.z.ToString("F2") + ", with a field of radius "
+                + Watermark.MarkRadius.ToString("F2")
+                + ". It will never appear in the colophon: the hand that laid the wire wrote nothing.");
+        }
+
         [MenuItem("Palimpsest/Delete Everything On The Page", priority = 24)]
         public static void Purge()
         {
